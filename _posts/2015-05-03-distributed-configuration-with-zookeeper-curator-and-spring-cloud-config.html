@@ -1,0 +1,84 @@
+---
+layout: post
+status: publish
+published: true
+title: Distributed configuration with ZooKeeper, Curator and Spring Cloud Config
+author:
+  display_name: Alfredo Díaz
+  url: http://www.therore.net/
+author_url: http://www.therore.net/
+date: '2015-05-03 10:07:07 +0200'
+date_gmt: '2015-05-03 10:07:07 +0200'
+categories:
+- Java
+tags:
+- zookeeper
+- spring-boot
+- spring-cloud
+- apache-curator
+- microservices
+- distributed-applications
+comments: []
+---
+<p><a href="https://zookeeper.apache.org/">Apache ZooKeeper</a> is a <em>centralized service for maintaining configuration information, naming, providing distributed synchronization, and providing group services</em>. It is used as a cluster coordination service for demanding systems such as <a href="https://hadoop.apache.org/">Hadoop</a>, <a href="http://kafka.apache.org/">Kafka</a>, <a href="https://storm.apache.org/">Storm</a>, <a href="http://akka.io/">Akka</a>, <a href="http://neo4j.com/">Neo4j</a>, <a href="http://www.talend.com/resource/open-source-esb.html">Talend ESB</a> and so on.</p>
+<p>ZooKeeper is a very versatile tool and a perfect partner for a <a href="http://martinfowler.com/articles/microservices.html">microservice</a> architecture. These are its most common uses:</p>
+<ul>
+<li>Centralized configuration</li>
+<li>Service discovery</li>
+<li>Resource allocation</li>
+<li>Failure detection</li>
+<li>Leader election for failover scenarios</li>
+<li>High priority queues</li>
+</ul>
+<p>I have started using <a href="https://zookeeper.apache.org/">ZooKeeper</a> as a <em>configuration repository</em> for a <i>spring-boot</i> application. I have found it extremelly simple thanks to <a href="http://curator.apache.org/">Apache Curator</a> and <a href="http://cloud.spring.io/spring-cloud-config/">Spring Cloud Config</a>.</p>
+<p><a href="https://github.com/spring-cloud/spring-cloud-zookeeper">Spring Cloud ZooKeeper Config</a> has a specific Spring PropertySource that loads transparently the configuration properties from ZooKeeper. It enables me to switch the source of my properties without affecting my application.</p>
+<p>
+<b>The source code of this example is <a href="https://github.com/alfredodiaz/kata-zookeeper">here</a></b></p>
+<h3>SampleSimpleApplication.java</h3>
+{% highlight java %}
+@Configuration
+@ComponentScan
+@EnableScheduling
+@EnableAutoConfiguration
+public class SampleSimpleApplication {
+    // Simple example shows how a command line spring application can execute an
+    // injected bean service. Also demonstrates how you can use @Value to inject
+    @Autowired
+    private HelloWorldService helloWorldService;
+    @Scheduled(fixedRate=10000)
+    public void run() {
+        System.out.println(this.helloWorldService.getHelloMessage());
+    }
+    public static void main(String[] args) throws Exception {
+        SpringApplication.run(SampleSimpleApplication.class, args);
+    }
+}
+{% endhighlight %}
+<h3>HelloWorldService.java</h3>
+{% highlight java %}
+@Component
+public class HelloWorldService {
+	@Value("${name}")
+	private String name;
+	public String getHelloMessage() {
+		return "Hello " + this.name;
+	}
+}
+{% endhighlight %}
+<h3>application.properties</h3>
+{% highlight sh %}
+spring.application.name=myapplication
+server.port=8088
+# name=James
+{% endhighlight %}
+<h3>Loading properties in ZooKeeper</h3>
+{% highlight sh %}
+zkCli.sh
+create /config "
+create /config/myapplication "
+create /config/myapplication/name Mark
+quit
+{% endhighlight %}
+<h1>All in action</h1>
+<p><script type="text/javascript" src="https://asciinema.org/a/19478.js" id="asciicast-19478" async></script>    </p>
+<noscript><img src="/images/zookeeper-300x217.png" alt="zookeeper" class="alignnone size-medium wp-image-204" /></noscript>

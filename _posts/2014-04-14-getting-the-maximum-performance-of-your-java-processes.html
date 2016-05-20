@@ -1,0 +1,138 @@
+---
+layout: post
+status: publish
+published: true
+title: Getting the maximum performance of your Java processes
+author:
+  display_name: Alfredo Díaz
+  url: http://www.therore.net/
+author_url: http://www.therore.net/
+date: '2014-04-14 21:01:52 +0200'
+date_gmt: '2014-04-14 21:01:52 +0200'
+categories:
+- Java
+tags:
+- thread-pool
+- self-tuning
+- auto-adjustable
+- throughput
+- camel
+- quartz
+comments: []
+---
+<div style="text-align: right;"><em><a href="http://search.maven.org/#browse|-2099403956" target="_blank">therore-concurrent</a> provides self-tuning thread-pools helping you to make the most of your system.</em></div>
+<p>Recently, I have been working in the optimization of an OLTP system. The software has a SEDA architecture (Staged Event Driven Architecture) with lots of threads doing little works. I had to fight with the hard task of adjusting a hundred of parameters. Each of those parameters affected some others and so on.</p>
+<p>For example if the number of concurrent database connections is set too low, it would cause a contention in getting connections. On the contrary, if that number is set too high, it could cause a lock-contention in the database when the threads want to access to some shared resources (index, row, block, etc.)</p>
+<p>Even more, not always the processing of an event requires the same type of resources. A sudden change in the type of events that are being treated, can turn an optimal configuration into a suboptimal.</p>
+<p>One of the most significant parameters is the number of threads assigned for each component. It is difficult to choose a good value if you don’t know how much the threads use each type of resource and how much are they coupled between each other.</p>
+<p>Usually certain tasks have a higher priority and should be processed as soon as possible. This further complicates the choice of the configuration. Enforcing priorities and maximizing throughputs are opposite goals therefore it is necessary to define the scope of both.</p>
+<p>In my experience a huge configurability can work against you. In a medium/big SOA system with a lot of service communications and complex workload profiles that even change over time, is almost impossible to get the optimal value for each of those parameters.  Because of that I found interesting to develop a library that might be able to adapt quickly at runtime in order to make the most of the system.</p>
+<h2>Self-tuning thread-pool</h2>
+<p>Nowadays creating threads manually is not very common. Instead of that, thread-pools are frequently used. A thread-pool manages the creation and allocation of threads. JDK comes with some interesting and useful classes for managing threads. I list two of the most important:</p>
+<ul>
+<li><em>ThreadPoolExecutor</em> is a very flexible and configurable thread-pool that supports customization of queue size, minimum and maximum pool size, keep-alive time, etc.</li>
+<li><em>Executors</em> is a convenient class that creates thread-pools for the most usual cases.</li>
+</ul>
+<p>I have developed the library <a href="http://search.maven.org/#browse|-2099403956" target="_blank">therore-concurrent</a> that takes advantage of those classes and extends some functionalities. The library contains analogous to the above classes.</p>
+<ul>
+<li><em>SelfTuningExecutorService</em> is a thread-pool that implements a mechanism for searching a good value for the pool size. The algorithm tries to maximize the throughput respecting the thread-pool priorities.</li>
+<li><em>SelfTuningExecutors</em> acts as the factory of <em>SelfTuningExecutorService</em>. It is recommended to use it as a singleton.</li>
+</ul>
+<p>The following charts show how quickly <em>SelfTuningExecutorService</em> finds the optimal value.</p>
+<p><a href="/images/selftuning_poolsize_executions_chart.png"><img class="alignnone size-medium wp-image-60" alt="selftuning_poolsize_executions_chart" src="/images/selftuning_poolsize_executions_chart-300x271.png" width="300" height="271" /></a></p>
+<h3>Using SelfTuningExecutors directly</h3>
+<ul>
+<li>Add the dependency to the pom</li>
+{% highlight xml %}
+<dependency>
+    <groupId>net.therore</groupId>
+    <artifactId>therore-concurrent</artifactId>
+    <version>1.1.0</version>
+</dependency>
+{% endhighlight %}
+<li>The following snippet shows how can it be used.</li>
+{% highlight java %}
+SelfTuningExecutors executors = SelfTuningExecutors.defaultSelfTuningExecutors();
+ExecutorServicce service = executors.newSelfTuningExecutor("executor-for-test", corePoolSize, initPoolSize
+       , maximumPoolSize, priority, queueSize);
+service.execute(task);
+{% endhighlight %}
+</ul>
+<p>The only new parameters are <em>initPoolSize </em>and <em>priority</em>.</p>
+<ul>
+<li><strong><em>initPoolSize</em></strong> is the initial amount of threads assigned to the pool.</li>
+<li><strong><em>priority</em></strong> is a positive number that works for <em>SelfTuningExecutorService</em> to limit the number of threads of this pool regarding others.</li>
+</ul>
+<h3>Integrating SelfTuningExecutors with Quartz Scheduler</h3>
+<p>Quartz-Scheduler has his own thread-pool interface and its name is "<em>ThreadPool</em>" (not surprise). The class <em>SelfTuningThreadPool</em> that is in the artifact <a href="http://search.maven.org/#browse|-2013291926" target="_blank">therore-concurrent-quartz</a> implements such interface. Integrating it is very easy, follow these steps:</p>
+<ul>
+<li>Add the dependency to the pom</li>
+{% highlight xml %}
+<dependency>
+    <groupId>net.therore</groupId>
+    <artifactId>therore-concurrent-quartz</artifactId>
+    <version>1.1.0</version>
+</dependency>
+{% endhighlight %}
+<li>Change the configuration properties of quartz</li>
+{% highlight sh %}
+# org.quartz.threadPool.class = org.quartz.simpl.SimpleThreadPool
+# org.quartz.threadPool.threadCount = 1
+# org.quartz.threadPool.threadPriority = 5
+org.quartz.threadPool.class = net.therore.concurrent.quartz.SelfTuningThreadPool
+org.quartz.threadPool.corePoolSize = 1
+org.quartz.threadPool.initPoolSize = 1
+org.quartz.threadPool.maximumPoolSize = 100
+org.quartz.threadPool.priority = 5
+org.quartz.threadPool.queueSize = 2
+{% endhighlight %}
+</ul>
+<h3>Integrating SelfTuningExecutors with Apache Camel</h3>
+<p>I love Apache Camel. It offers a lot of components supporting integration with different technologies. But if none of them actually help you yet, it's pretty easy to make your own component.</p>
+<p>Camel's team has thought very well the <a href="https://camel.apache.org/threading-model.html" target="_blank">threading model</a>. They use the concept (and interface) of <em>ThreadPoolProfile</em> which is a kind of thread-pool-template that you can use to instantiate several pools with the same configuration. If that is not enough, you can program your own implementation of <em>ExecutorServiceManager</em>, the Camel's thread-pool provider. Simplifying, think about it like the <em>Executors</em> class of the JDK.</p>
+<p>I've just done that, <em>SelfTunigExecutorServiceManager</em> is the name of my own implementation of <em>ExecutorServiceManager</em>. It is located in other maven module <a href="http://search.maven.org/#browse|-1176615421" target="_blank">therore-concurrent-camel</a>. I'll explain how to use it.</p>
+<ul>
+<li>Add the dependency to the pom</li>
+{% highlight xml %}
+<dependency>
+    <groupId>net.therore</groupId>
+    <artifactId>therore-concurrent-camel</artifactId>
+    <version>1.1.0</version>
+</dependency>
+{% endhighlight %}
+<li>The following snippet contains two connected routes with SEDA component and <em>SelfTunigExecutorServiceManager</em></li>
+{% highlight java %}
+SelfTunigExecutorServiceManager executorManager = new SelfTunigExecutorServiceManager(context);
+context.setExecutorServiceManager(executorManager);
+ThreadPoolProfile profile = new ThreadPoolProfile();
+profile.setId("self-tuning-profile");
+profile.setMaxPoolSize(100);
+profile.setMaxQueueSize(100);
+profile.setDefaultProfile(true);
+executorManager.setDefaultThreadPoolProfile(profile);        
+final String sedaEndpointUri = "seda:myseda?blockWhenFull=true&size=1";
+context.addRoutes(new RouteBuilder() {
+   @Override
+   public void configure() throws Exception {
+       from("direct:in")
+       .to(sedaEndpointUri);
+   }
+});
+context.addRoutes(new RouteBuilder() {
+   @Override
+   public void configure() throws Exception {
+       from(sedaEndpointUri)
+       .threads(1, 100)
+       .to("bean:mybean");
+   }
+});
+ProducerTemplate template = context.createProducerTemplate();
+context.start();
+for (int i=0; i<ITERATIONS; i++) {
+   template.sendBody("direct:in", "dummy string");
+}
+{% endhighlight %}
+</ul>
+<h2>Summary</h2>
+<p>I have figured out that there are many elements that might turn into <em>selftuning</em> ones. I chose <em>ThreadPool</em> because from my point of view is one of the most important, used and easy to test element.</p>
+<p>Moreover, most of the modern libraries and frameworks feature different ways to extend their factories, providers and templates. All of that aims to develop general purpose classes and integrate them with lots of frameworks.</p>

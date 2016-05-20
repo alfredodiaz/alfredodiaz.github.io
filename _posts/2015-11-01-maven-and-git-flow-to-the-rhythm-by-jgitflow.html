@@ -1,0 +1,33 @@
+---
+layout: post
+status: publish
+published: true
+title: Maven and git-flow to the rhythm by jgitflow
+author:
+  display_name: Alfredo Díaz
+  url: http://www.therore.net/
+author_url: http://www.therore.net/
+date: '2015-11-01 23:22:57 +0100'
+date_gmt: '2015-11-01 23:22:57 +0100'
+categories:
+- Uncategorized
+tags: []
+comments: []
+---
+<p>
+<img src="/images/jgitflow-example.png" alt="jgitflow-example" width="313" class="alignnone size-medium wp-image-313"  style="float: left; padding: 30px" /><br />
+<a href="https://bitbucket.org/atlassian/jgit-flow/wiki/Home.wiki#!maven-jgit-flow-plugin">JGIT-Flow Maven Plugin</a> is an alternative to the old <em>maven-release-plugin</em> that supports git-flow via maven. </p>
+<p>The main benefit of using this plugin is that it handles git branches/tags, pom versions (both release and SNAPSHOTS), and builds the project after each merging/rebasing to ensure stability.</p>
+<h4>A work-flow example</h4>
+<pre>
+git init
+git remote add origin https://github.com/alfredodiaz/kata-jgitflow.git
+git add .
+git commit -m 'first commit'
+mvn jgitflow:feature-start -DenableFeatureVersions=true -DpushFeatures=true
+mvn jgitflow:feature-finish -DenableFeatureVersions=true -DpushFeatures=true -DfeatureRebase=true -DkeepBranch=true
+mvn jgitflow:release-start -DpushReleases=true -DautoVersionSubmodules=true
+mvn jgitflow:release-finish -DpushReleases=true -DautoVersionSubmodules=true -DkeepBranch=true
+mvn jgitflow:hotfix-start -DpushHotfixes=true -DautoVersionSubmodules=true
+mvn jgitflow:hotfix-finish -DpushHotfixes=true -DautoVersionSubmodules=true -DkeepBranch=true
+</pre>

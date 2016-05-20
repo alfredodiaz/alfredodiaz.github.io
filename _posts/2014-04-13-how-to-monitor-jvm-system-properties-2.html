@@ -1,0 +1,39 @@
+---
+layout: post
+status: publish
+published: true
+title: How to Monitor JVM System Properties
+author:
+  display_name: Alfredo Díaz
+  url: http://www.therore.net/
+author_url: http://www.therore.net/
+date: '2014-04-13 07:42:19 +0200'
+date_gmt: '2014-04-13 07:42:19 +0200'
+categories:
+- Java
+tags: []
+comments: []
+---
+<div style="text-align: right;"><em>Trace all calls to System.getProperty method</em></div>
+<p>Many libraries use system properties for settings.  For example, you usually have to set a property to enable debug traces or to activate certain behaviors.  However, sometimes system properties that are used are not well documented or you are not sure that they are having some effect.  In such cases it would be useful to have a way to know which system properties are queried.</p>
+<p>There are several manners to do this but I have found a simple way that is not so intrusive. By creating a custom Security Manager you can define a method that checks property accesses. This method is able to send to the logger or to the standard output what property has been queried.</p>
+{% highlight java %}
+public class PropertyAccessPrinterSecurityManager extends SecurityManager {
+    @Override
+    public void checkPropertyAccess(String key) {
+        System.out.println("System.getProperty(\"+key+"\")");
+    }
+}
+{% endhighlight %}
+<p>This class should be compiled and available in the classpath.<br />
+Now we create in the current directory a file named “java.policy” with the following content:</p>
+{% highlight java %}
+grant {
+	permission java.security.AllPermission;
+};
+{% endhighlight %}
+<p>We just have everything we need to trace calls to System.getProperty. Next we add these parameters to the java call:
+{% highlight java %}
+java -Djava.security.manager=PropertyAccessPrinterSecurityManager -Djava.security.policy==java.policy
+{% endhighlight %}
+<div class="entry-meta" style="text-align: right;"><em>This article was originally published in <a href="http://java.ulitzer.com/node/2880467"  target="_blank">java.ulitzer.com</a></em></div>

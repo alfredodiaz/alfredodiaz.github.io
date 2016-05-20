@@ -1,0 +1,94 @@
+---
+layout: post
+status: publish
+published: true
+title: Live RESTful documentation with Spring Boot and Swagger
+author:
+  display_name: Alfredo Díaz
+  url: http://www.therore.net/
+author_url: http://www.therore.net/
+date: '2016-04-05 21:24:42 +0200'
+date_gmt: '2016-04-05 21:24:42 +0200'
+categories:
+- Uncategorized
+tags:
+- spring-boot
+- swagger
+- restful
+- documentation
+comments: []
+---
+<p>
+<a href="/images/swagger.png"><img src="/images/swagger-300x201.png" alt="swagger" width="300" height="201" class="alignnone size-medium wp-image-330" style="float: left; padding: 30px"/></a>As soon as you build an API including a few operations, you will realize that is hard to maintain code and documentation in sync. Therefore you can use a tool like <a href="http://swagger.io/">Swagger</a>. It can generate easly a high quality documentation for you.</p>
+<p>Swagger is both a specification and a framework implementation. The strength of Swagger is its hability to keep in sync the code and the documentation. Once you integrate Swagger with your server app, it will generate a live RESTful documentation which will let you navigate and test without coding a single line.</p>
+<h2>How to integrate your Spring Boot Application with Swagger</h2>
+<h4>First step: Enabling Swagger</h4>
+<p>Including this annotation in a configuration class<br />
+{% highlight java %}
+@EnableSwagger2
+{% endhighlight %}
+<h4>Second step: provide general api information</h4>
+<p>This is an example<br />
+
+{% highlight java  %}
+@Bean
+public Docket newsApi() {
+  return new Docket(DocumentationType.SWAGGER_2)
+      .apiInfo(new ApiInfoBuilder()
+          .description(" is a sample server Petstore server.  You can find out more about Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this sample, you can use the api key `special-key` to test the authorization filters.")
+          .version("1.0.0")
+          .title("Swagger Petstore")
+          .termsOfServiceUrl("http://swagger.io/terms/")
+          .contact(
+              new Contact(null, null, "apiteam@swagger.io")
+          )
+          .license("Apache 2.0")
+          .licenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html")
+          .build())
+      .host("localhost:8080")
+      .tags(
+          new Tag("name", "pet"),
+          new Tag("description", "Everything about your Pets")
+      )
+      .select().paths(regex("/.*"))
+      .build();
+}
+{% endhighlight %}
+<h4>Third step: include annotations in your api</h4>
+<p>There are a bunch of annotations that can be used but the most important are:</p>
+<dl>
+<dt>@Api</dt>
+<dd>Marks a class as a Swagger resource</dd>
+<dt>@ApiOperation</dt>
+<dd>Describes an operation or typically a HTTP method against a specific path.</dd>
+<dt>@ApiResponses</dt>
+<dd>A list of multiple ApiResponses</dd>
+</dl>
+{% highlight java %}
+@Controller
+@RequestMapping(value = "/pet", produces = {APPLICATION_JSON_VALUE})
+@Api(value = "/pet", description = "the pet API")
+public class PetApi {
+  @ApiOperation(value = "Finds Pets by status", notes = "Multiple status values can be provided with comma seperated strings", response = Pet.class, responseContainer = "List")
+  @ApiResponses(value = {
+      @ApiResponse(code = 200, message = "successful operation"),
+      @ApiResponse(code = 400, message = "Invalid status value") })
+  @RequestMapping(value = "/findByStatus", method = GET)
+  public ResponseEntity<List<Pet>> findPetsByStatus(
+      @ApiParam(value = "Status values that need to be considered for filter", defaultValue = "available")
+        @RequestParam(value = "status", required = false, defaultValue="available") List<String> status
+  )  throws NotFoundException {
+    // do some magic!
+    return new ResponseEntity<List<Pet>>(HttpStatus.OK);
+  }
+}
+{% endhighlight %}
+<h2>Browsing the live api-doc</h2>
+<p>Enter this page<br />
+http://localhost:8080//swagger-ui.html</p>
+<p>
+ <video width="1048" height="512" controls>
+  <source src="/images/swagger.webm" type="video/webm">
+Your browser does not support the video tag.
+ </video> 
+</p>

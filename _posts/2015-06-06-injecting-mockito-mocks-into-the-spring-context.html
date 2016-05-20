@@ -1,0 +1,79 @@
+---
+layout: post
+status: publish
+published: true
+title: Injecting Mockito mocks into the Spring Context
+author:
+  display_name: Alfredo Díaz
+  url: http://www.therore.net/
+author_url: http://www.therore.net/
+date: '2015-06-06 10:25:35 +0200'
+date_gmt: '2015-06-06 10:25:35 +0200'
+categories:
+- Java
+tags:
+- spring-boot
+- testing
+- mockito
+comments: []
+---
+<p>
+<img src="/images/enablemockedbean.png" alt="enablemockedbean" width="261" height="124" class="alignnone size-full wp-image-286"  style="float: left; padding: 30px" /><br />
+If you are using <a href="http://docs.spring.io">spring</a> and <a href="http://mockito.org/">mockito</a> for testing you are likely to use the annotations <a href="http://site.mockito.org/mockito/docs/current/org/mockito/InjectMocks.html">@InjectMocks</a> and <a href="http://site.mockito.org/mockito/docs/current/org/mockito/Mock.html">@Mock</a>. These annotations along with the static initializer <a href="http://site.mockito.org/mockito/docs/current/org/mockito/MockitoAnnotations.html">MockitoAnnotations.initMocks(this)</a>, offer a way to inject mock beans into the spring beans.</p>
+<p>This technique has at least two limitations:</p>
+<ul>
+<li><strong>Only works for those spring beans present in the test class</strong>. If you need to inject the mock in every bean that depends on, you must declare and autowire all those beans ( although you do not require them ).</li>
+<li><strong>Mocks are injected after all the Spring initializations and post-processing</strong>. If you are using <a href="http://docs.oracle.com/javaee/7/api/javax/annotation/PostConstruct.html">@PostConstruct</a>, <a href="http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/beans/factory/FactoryBean.html">FactoryBean</a> or similar, your mocks will be injected too late and will not be invoked.</li>
+</ul>
+<p>
+An alternative is to use <a href="https://github.com/alfredodiaz/therore-spring-mockito/blob/master/src/main/java/net/therore/spring/mockito/MockedBean.java">@MockedBean</a> and <a href="https://github.com/alfredodiaz/therore-spring-mockito/blob/master/src/main/java/net/therore/spring/mockito/EnableMockedBean.java">@EnableMockedBean</a>. By means of these annotations, mocks are created and directly injected into the Spring Context. The original beans are replaced by the mocks, before any initialization and post-processing happen.</p>
+<h4>An Example.</h4>
+<h5>1. Add the dependency</h5>
+{% highlight xml %}
+<dependency>
+    <groupId>net.therore.spring.mockito</groupId>
+    <artifactId>therore-spring-mockito</artifactId>
+    <version>RELEASE</version>
+</dependency>
+{% endhighlight %}
+<h5>2. Example of a service</h5>
+{% highlight java %}
+@Component
+public class HelloWorldService {
+    @Value("${name:Spring-Boot}")
+    private String name;
+    public String getHelloMessage() {
+        return "Hello " + this.name;
+    }
+}
+{% endhighlight %}
+<h5>3. Example of a middle component</h5>
+{% highlight java %}
+@Component
+public class MiddleComponent {
+    @Autowired
+    private HelloWorldService helloWorldService;
+    public String getHelloMessage() {
+        return helloWorldService.getHelloMessage();
+    }
+}
+{% endhighlight %}
+<h5>4. This is a test class for the MiddleComponent</h5>
+{% highlight java %}
+@EnableMockedBean
+@SpringBootApplication
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringApplicationConfiguration(classes=MockedBeanTest.class)
+public class MockedBeanTest {
+    @MockedBean
+    private HelloWorldService helloWorldService;
+    @Autowired
+    private MiddleComponent middleComponent;
+    @Test
+    public void helloWorldIsCalledOnlyOnce() {
+        middleComponent.getHelloMessage();
+        // THEN HelloWorldService is called only once
+        verify(helloWorldService, times(1)).getHelloMessage();
+    }
+}
+{% endhighlight %}

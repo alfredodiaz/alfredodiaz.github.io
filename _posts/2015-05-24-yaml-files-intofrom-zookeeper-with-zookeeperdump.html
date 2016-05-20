@@ -1,0 +1,73 @@
+---
+layout: post
+status: publish
+published: true
+title: YAML files into/from ZooKeeper with zookeeperdump
+author:
+  display_name: Alfredo Díaz
+  url: http://www.therore.net/
+author_url: http://www.therore.net/
+date: '2015-05-24 10:46:23 +0200'
+date_gmt: '2015-05-24 10:46:23 +0200'
+categories:
+- Java
+- Groovy
+tags:
+- zookeeper
+- spring-boot
+- spring-cloud
+- microservices
+- distributed-applications
+comments: []
+---
+<p><img src="/images/zk_boot_yaml-300x193.png" alt="Spring Boot Yaml and ZooKeeper" width="300" height="193" class="alignnone size-medium wp-image-253"  style="float: left; padding: 30px" /></p>
+<p><a href="http://projects.spring.io/spring-boot/">Spring Boot</a> supports the use of <a href="http://www.yaml.org/start.html">YAML</a> files to <a href="http://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html#boot-features-external-config-yaml">externalize configuration</a>. YAML is a superset of JSON, human-readable and very convenient for specifying hierarchical configuration data. This is an example of yaml<br></p>
+{% highlight sh %}
+---
+organizations:
+  departments:
+    office:
+    - area: "marketing"
+      employee:
+      - name: "Tom"
+        email: "tom@mail.com"
+      - name: "James"
+      - name: "Mark"
+    - area: "distribution"
+      employee:
+      - name: "Steve"
+      - name: "Richard"
+{% endhighlight %}
+<p>You may also want to use <a href="https://github.com/spring-cloud/spring-cloud-zookeeper">Spring Cloud ZooKeeper Config</a> and having your configuration distributed along your cluster. To get it you have to create a tree structure of nodes in ZooKeeper that is equivalent to the content of your yaml configuration files. It can be done through creation scripts for <a href="http://zookeeper.apache.org/doc/trunk/zookeeperStarted.html#sc_ConnectingToZooKeeper">zkCli</a> but is easier to use <a href="https://github.com/alfredodiaz/therore-zookeeperdump">zookeeperdump</a>. Zookeeperdump is a tool intended to help loading configurations for <a href="https://github.com/spring-cloud/spring-cloud-zookeeper">Spring Cloud ZooKeeper Config</a>.<br></p>
+<p>It can be downloaded with this maven command.<br><br />
+{% highlight sh %}
+mvn -Dartifact=net.therore.zookeeperdump:therore-zookeeperdump:1.1.0:groovy -q -Ddest=zookeeperdump.groovy dependency:get
+{% endhighlight %}
+<p>Zookeeperdump is a groovy script which requires that groovy binaries have been installed previously in your system. I recommend the use of <a href="http://gvmtool.net/">gvm</a> for managing groovy tools and versions.<br></p>
+<p>To view all the tool options execute zookeeperdump.groovy without parameters:<br><br />
+{% highlight sh %}
+usage: zookeeperdump.groovy [-s {ip:port}] [-x | -c] [-u scheme:id] [-a {scheme:id:perm,scheme:id:perm...}] zpath
+ -a,--acls <arg>     set acls used for creation
+ -c,--create         import tree in yaml format from stdin
+ -s,--server <arg>   zookeeper server connection. By default localhost:2181
+ -u,--auth <arg>     set session authentication
+ -x,--extract        extract tree in yaml format to stdout
+examples:
+> zookeeperdump.groovy -x /config/application > dump.yml
+> zookeeperdump.groovy -c /config/application < dump.yml
+> zookeeperdump.groovy -x /config/application/scheduler/timeout
+> echo 1000 | zookeeperdump.groovy -c /config/application/scheduler/timeout
+> zookeeperdump.groovy -u digest:usr:pwd -a digest:usr:uPIxv8DxE/mT5RPGVrsDMJnQoTQ=:rw -c /config/application < dump.yml
+> zookeeperdump.groovy -u digest:usr:pwd -a digest:usr:uPIxv8DxE/mT5RPGVrsDMJnQoTQ=:r -c /config/application < dump.yml
+> zookeeperdump.groovy -u digest:super:secret  -c /config/myapplication < dump.yml
+> zookeeperdump.groovy -u digest:super:secret  -x /config/myapplication > dump.yml
+{% endhighlight %}
+<p>For example to import a yaml file into ZooKeeper is only needed this command.<br />
+{% highlight sh %}
+zookeeperdump.groovy -c /config/application < dump.yml
+{% endhighlight %}
+<p>To export is also quite simple
+{% highlight sh %}
+zookeeperdump.groovy -x /config/application > dump.yml
+{% endhighlight %}
+<p>By the way I recommend you to read <a href="http://zookeeper.apache.org/doc/r3.5.0-alpha/zookeeperProgrammers.html">ZooKeeper Programmer's Guide</a> to have a basic knowledge about ZooKeeper.</p>
