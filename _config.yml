@@ -17,7 +17,7 @@ github_username:  alfredodiaz
 markdown: kramdown
 
 # THEME-SPECIFIC CONFIGURATION
-theme:
+theme_settings:
   # Meta
   title: alfredo.diaz@therore.net
   avatar: # avatar.png
