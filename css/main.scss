@@ -13,6 +13,10 @@
 @import 'layouts/posts';
 @import 'layouts/index';
 
+// Tags
+@import 'components/tag';
+@import 'layouts/tags';
+
 // Partials
 @import 'includes/header';
 @import 'includes/footer';

@@ -26,6 +26,7 @@ layout: default
         </h1>
         <p class="meta">
           {{ post.date | date: "%B %-d, %Y" }}
+          {% include tags.html tags=post.tags %}
         </p>
       </header>
       <div class="excerpt">

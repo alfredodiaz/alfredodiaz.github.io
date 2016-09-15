@@ -1,0 +1,7 @@
+<ul class="meta-tag-list">
+  {% for tag in include.tags %}
+	<li class="meta-tag-item">
+	  <a href="{{site.baseurl}}/tag/index.html#{{ tag | cgi_escape | downcase }}">{{ tag }}</a>
+	</li>
+  {% endfor %}
+</ul>
