@@ -21,14 +21,14 @@ comments: []
 
 <p>
 <a href="/images/logback_with_mockito.jpg"><img src="/images/logback_with_mockito.jpg" alt="logback with mockito" width="300" height="201" class="alignnone size-medium wp-image-330" style="float: left; padding: 30px"/></a>
-When a modern robust application has to deal with failures, it try to continue operating gracefully keeping a normal external behaviour. Usually each of these failures are reported to a logging system in order that they can be monitorized. Not only failures are reported, any event with a certain importance is logged with the same purpose.
+When a modern robust application has to deal with failures, it tries to continue operating gracefully keeping a normal external behaviour. Usually each of these failures are reported to a logging system in order that they can be monitorized. Not only failures are reported, any relevant event is logged with the same purpose.
 </p>
 
-Focusing on unit testing, it is quite common that when we test a piece of code, we get an output with no apparent errors and on the other hand the logging system has received notification of errors. **It becomes clear that to test properly operating of the [SUT](https://en.wikipedia.org/wiki/System_under_test), logging system calls has to be checked**.
+Focusing on unit testing, it is quite common that when we test a piece of code, we get an output with no apparent errors and on the other hand the logging system has received notification of errors. **It becomes clear that to test properly operating of the [SUT](https://en.wikipedia.org/wiki/System_under_test), logged events also have to be verified**.
 
-I have created a Junit rule to facilitate assertions of logging event with logback.
+I have created a Junit rule to facilitate assertions on logging events with logback.
 
-This unit-test class shows some examples. It requires the following dependencies.
+The unit-test class LogbackRuleTest shows some examples and requires the following dependencies.
 {% highlight xml %}
   <dependency>
     <groupId>net.therore.spring.mockito</groupId>
@@ -70,6 +70,7 @@ public class LogbackRuleTest {
     public void happyPath() {
         log.info("info message");
 
+        // verify that no error with exception has been logged
         verify(rule.getLog(), never()).contains(argThat(errorWithException()));
     }
 
@@ -77,6 +78,7 @@ public class LogbackRuleTest {
     public void exceptionPath() {
         log.error("error message", new RuntimeException());
 
+        // verify that no error with exception has been logged
         verify(rule.getLog(), never()).contains(argThat(errorWithException()));
     }
 
@@ -85,6 +87,7 @@ public class LogbackRuleTest {
         log.info("info message");
         log.error("error message", new RuntimeException());
 
+        // verify that no error with exception has been logged
         verify(rule.getLog(), never()).contains(argThat(errorWithException()));
     }
 
@@ -92,6 +95,7 @@ public class LogbackRuleTest {
     public void testContainingSpecificMessage() {
         log.info("specific message");
 
+        // verify that the message "specific message" has been logged
         verify(rule.getLog(), atLeastOnce()).contains(argThat(text("specific message")));
     }
 
@@ -100,6 +104,7 @@ public class LogbackRuleTest {
         log.info("specific message");
         log.info("other message");
 
+        // verify that the message "specific message" has been logged
         verify(rule.getLog(), atLeastOnce()).contains(argThat(text("specific message")));
     }
 
@@ -107,6 +112,7 @@ public class LogbackRuleTest {
     public void testNotContainingSpecificMessage() {
         log.info("specific message");
 
+        // verify that the message "specific message" has not been logged
         verify(rule.getLog(), never()).contains(argThat(text("specific message")));
     }
 
@@ -115,6 +121,7 @@ public class LogbackRuleTest {
         log.info("other message");
         log.info("specific message");
 
+        // verify that the message "specific message" has not been logged
         verify(rule.getLog(), never()).contains(argThat(text("specific message")));
     }
 
