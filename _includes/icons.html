@@ -62,6 +62,14 @@
 </li>
 {% endif %}
 
+{% if site.theme_settings.meetup %}
+<li>
+	<a target="_blank" href="{{ site.theme_settings.meetup }}" title="{{ site.theme_settings.str_follow_on }} Meetup">
+		<img src="/images/meetup.svg" class="fa-meetup"></img>
+	</a>
+</li>
+{% endif %}
+
 {% if site.theme_settings.behance %}
 <li>
 	<a target="_blank" href="https://www.behance.net/{{ site.theme_settings.behance }}" title="{{ site.theme_settings.str_follow_on }} Behance">
