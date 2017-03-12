@@ -31,13 +31,8 @@ I have created a Junit rule to facilitate assertions on logging events with logb
 The unit-test class LogbackRuleTest shows some examples and requires the following dependencies.
 {% highlight xml %}
   <dependency>
-    <groupId>net.therore.spring.mockito</groupId>
-    <artifactId>therore-spring-mockito</artifactId>
-    <version>LATEST</version>
-  </dependency> 
-  <dependency>
-    <groupId>net.therore.spring.mockito</groupId>
-    <artifactId>therore-spring-mockito</artifactId>
+    <groupId>net.therore.logback</groupId>
+    <artifactId>therore-logback</artifactId>
     <version>LATEST</version>
   </dependency> 
   <dependency>
@@ -51,12 +46,12 @@ The unit-test class LogbackRuleTest shows some examples and requires the followi
 
 {% highlight java  %}
 import lombok.extern.slf4j.Slf4j;
-import net.therore.spring.mockito.logback.LogbackRule;
+import net.therore.logback.LogbackRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static net.therore.spring.mockito.logback.EventMatchers.errorWithException;
-import static net.therore.spring.mockito.logback.EventMatchers.text;
+import static net.therore.logback.EventMatchers.errorWithException;
+import static net.therore.logback.EventMatchers.text;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.*;
 
