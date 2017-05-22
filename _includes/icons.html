@@ -22,6 +22,14 @@
 </li>
 {% endif %}
 
+{% if site.theme_settings.docker_hub %}
+<li>
+	<a target="_blank" href="{{ site.theme_settings.docker_hub }}" title="{{ site.theme_settings.str_follow_on }} Docker Hub">
+		<img src="/images/docker_hub.svg" class="fa-docker-hub"></img>
+	</a>
+</li>
+{% endif %}
+
 {% if site.theme_settings.stack_share %}
 <li>
 	<a target="_blank" href="{{ site.theme_settings.stack_share }}" title="{{ site.theme_settings.str_follow_on }} Stack Share">
