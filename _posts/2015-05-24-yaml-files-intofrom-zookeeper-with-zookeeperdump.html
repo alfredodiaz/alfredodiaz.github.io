@@ -41,7 +41,7 @@ organizations:
 <p>You may also want to use <a href="https://github.com/spring-cloud/spring-cloud-zookeeper">Spring Cloud ZooKeeper Config</a> and having your configuration distributed along your cluster. To get it you have to create a tree structure of nodes in ZooKeeper that is equivalent to the content of your yaml configuration files. It can be done through creation scripts for <a href="http://zookeeper.apache.org/doc/trunk/zookeeperStarted.html#sc_ConnectingToZooKeeper">zkCli</a> but is easier to use <a href="https://github.com/alfredodiaz/therore-zookeeperdump">zookeeperdump</a>. Zookeeperdump is a tool intended to help loading configurations for <a href="https://github.com/spring-cloud/spring-cloud-zookeeper">Spring Cloud ZooKeeper Config</a>.<br></p>
 <p>It can be downloaded with this maven command.<br><br />
 {% highlight sh %}
-mvn -Dartifact=net.therore.zookeeperdump:therore-zookeeperdump:1.1.0:groovy -q -Ddest=zookeeperdump.groovy dependency:get
+mvn -Dartifact=net.therore.zookeeperdump:therore-zookeeperdump:LATEST:groovy -q -Ddest=zookeeperdump.groovy dependency:get
 {% endhighlight %}
 <p>Zookeeperdump is a groovy script which requires that groovy binaries have been installed previously in your system. I recommend the use of <a href="http://gvmtool.net/">gvm</a> for managing groovy tools and versions.<br></p>
 <p>To view all the tool options execute zookeeperdump.groovy without parameters:<br><br />
