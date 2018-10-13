@@ -26,7 +26,7 @@ theme_settings:
 
   # Header and footer text
   header_text:
-  header_text_feature_image:
+  header_text_feature_image: images/simple_is_hard_picasso.png
   footer_text: >
    therore.net blog is created by <a href="/about/">Alfredo Diaz</a>
    </br>
